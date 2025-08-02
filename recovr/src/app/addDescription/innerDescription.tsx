@@ -100,6 +100,11 @@ export default function AddDescription() {
     router.push("/advice");
   };
 
+  const sendBack = () => {
+    router.push("/browse");
+  };
+
+
   // Arrow navigation handlers
   const handlePrevDay = () => {
     if (dayIndex > 0) setDayIndex(dayIndex - 1);
@@ -115,16 +120,16 @@ export default function AddDescription() {
         <div className="flex space-x-4">
           <button onClick={handlePrevDay} disabled={dayIndex === 0}>
             <Image
-              src="/heartLogo.png"
+              src="/rightArrow.png"
               alt="Left Arrow"
               width={40}
               height={40}
-              style={{ opacity: dayIndex === 0 ? 0.5 : 1 }}
+              style={{ opacity: dayIndex === 0 ? 0.5 : 1, transform: 'scaleX(-1)'}}
             />
           </button>
           <button onClick={handleNextDay} disabled={dayIndex >= allImages.length - 1}>
             <Image
-              src="/heartLogo.png"
+              src="/rightArrow.png"
               alt="Right Arrow"
               width={40}
               height={40}
@@ -207,7 +212,9 @@ export default function AddDescription() {
       </div>
 
       <div>
-        <Button className="text-lg mr-2">Back</Button>
+        <Button className="text-lg mr-2" onClick={sendBack}>
+          Back
+        </Button>
         <Button className="text-lg mr-2" onClick={() => saveData()}>
           Log Data
         </Button>

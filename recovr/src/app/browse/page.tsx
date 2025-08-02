@@ -50,7 +50,7 @@ export default function JourneyPage() {
   return (
     <div className="font-sans items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <div className="w-full max-w-sm">
-        <h1 className="text-3xl font-bold mb-4">Start your journey now.</h1>
+        <h1 className="text-3xl font-bold mb-4">Start your recovery now.</h1>
 
         <div className="flex gap-2 mb-6">
           <Input

@@ -4,6 +4,8 @@ import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation"
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button";
+
 
 export default function addDescription() {
     const searchParams = useSearchParams();
@@ -11,6 +13,17 @@ export default function addDescription() {
     const day = searchParams.get("day");
     const router = useRouter();
         
+    const [image, setImage] = useState<string | null>(null);
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
     return (
         <div className = "min-h-screen p-8 pb-20 gap-16 sm:p-20">
             <div className = "mb-2">
@@ -39,13 +52,32 @@ export default function addDescription() {
                 ))}
             </div>
 
-            {/* Additional Comments Box */}
-            <div className="p-4 rounded-xl border-2 bg-white/30 backdrop-blur-sm">
+            <div className="p-4 rounded-xl border-2 bg-white/30 backdrop-blur-sm mb-4">
                 <h2 className="font-bold mb-2">Additional Comments.</h2>
                 <Textarea
                 placeholder="Add any problems or notes (optional)..."
                 className="w-full bg-transparent border-0 italic focus-visible:ring-0"
                 />
+            </div>
+
+            <div className="p-4 rounded-xl border-2 bg-white/30 backdrop-blur-sm mb-4">
+                <h2 className="font-bold mb-2">Upload Image.</h2>
+                <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="mb-3"
+                />
+                {image && (
+                <div className="rounded-lg overflow-hidden border bg-white/50">
+                    <img src={image} alt="Preview" className="w-full h-auto" />
+                </div>
+                )}
+            </div>
+            <div>
+                <Button className = "text-lg mr-2">Back</Button>
+                <Button className = "text-lg mr-2">Log Data</Button>
+                <Button className = "text-lg">Continue to Advice</Button>
             </div>
         </div>
     );

@@ -49,13 +49,56 @@ function Slider({
           )}
         />
       </SliderPrimitive.Track>
-      {Array.from({ length: _values.length }, (_, index) => (
-        <SliderPrimitive.Thumb
-          data-slot="slider-thumb"
-          key={index}
-          className="border-primary bg-background ring-ring/50 block size-4 shrink-0 rounded-full border shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
-        />
-      ))}
+      {Array.from({ length: _values.length }, (_, index) => {
+        // Calculate the thumb's color based on its value between min and max
+        const val = _values[index];
+        const percent = (val - min) / (max - min);
+        // Interpolate: ff6f6f (left), white (center), 89E774 (right)
+        function hexToRgb(hex: string): [number, number, number] {
+          hex = hex.replace('#', '');
+          const bigint = parseInt(hex, 16);
+          return [
+            (bigint >> 16) & 255,
+            (bigint >> 8) & 255,
+            bigint & 255
+          ];
+        }
+        function lerp(a: number, b: number, t: number): number {
+          return a + (b - a) * t;
+        }
+        const left = hexToRgb('ff6f6f');
+        const center = [255, 255, 255];
+        const right = hexToRgb('89E774');
+        let rgb: [number, number, number];
+        if (percent <= 0.5) {
+          // Interpolate from left to center
+          const t = percent / 0.5;
+          rgb = [
+            Math.round(lerp(left[0], center[0], t)),
+            Math.round(lerp(left[1], center[1], t)),
+            Math.round(lerp(left[2], center[2], t))
+          ];
+        } else {
+          // Interpolate from center to right
+          const t = (percent - 0.5) / 0.5;
+          rgb = [
+            Math.round(lerp(center[0], right[0], t)),
+            Math.round(lerp(center[1], right[1], t)),
+            Math.round(lerp(center[2], right[2], t))
+          ];
+        }
+        const color = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+        return (
+          <SliderPrimitive.Thumb
+            data-slot="slider-thumb"
+            key={index}
+            className={cn(
+              "border-primary ring-ring/50 block size-4 shrink-0 rounded-full border shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
+            )}
+            style={{ background: color }}
+          />
+        );
+      })}
     </SliderPrimitive.Root>
   )
 }

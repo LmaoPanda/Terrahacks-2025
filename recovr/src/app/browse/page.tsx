@@ -1,33 +1,41 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useRouter } from "next/navigation"
-
+import { useRouter } from "next/navigation";
 
 export default function JourneyPage() {
-    const [cards, setCards] = useState<string[]>([]);
+    const [cards, setCards] = useState<string[]>(() => {
+        if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("journeyCards");
+        return saved ? JSON.parse(saved) : [];
+        }
+        return [];
+    });
+    
     const [injury, setInjury] = useState("");
     const router = useRouter();
+
     const addCard = () => {
         if (injury.trim() === "") return;
-        setCards([...cards, injury]);
+        const updated = [...cards, injury];
+        setCards(updated);
+        localStorage.setItem("journeyCards", JSON.stringify(updated));
         setInjury("");
     };
 
-    const goToTimeline = (card:string) => {
-        router.push(`/timeline?injury=${encodeURIComponent(card)}`)
-    }
-    
-    useEffect(() => {
-    const saved = localStorage.getItem("journeyCards");
-    if (saved) setCards(JSON.parse(saved));
-    }, []);
+    const getCurrentDayIndex = (injury: string) => {
+        const daysData = JSON.parse(localStorage.getItem("injuryDays") || "{}");
+        const days = daysData[injury] || [];
+        return days.length ? days.length - 1 : 0;
+    };
 
-    useEffect(() => {
-        localStorage.setItem("journeyCards", JSON.stringify(cards));
-    }, [cards]);
+    const goToAddDescription = (card: string) => {
+        const dayIndex = getCurrentDayIndex(card);
+        router.push(`/addDescription?injury=${encodeURIComponent(card)}&day=${dayIndex}`);
+    };
+
     return (
         <div className="font-sans items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
         <div className="w-full max-w-sm">
@@ -49,7 +57,7 @@ export default function JourneyPage() {
             {cards.map((card, i) => (
                 <button
                 key={i}
-                onClick = {() => goToTimeline(card)}
+                onClick={() => goToAddDescription(card)}
                 className="p-4 rounded-xl border-2 bg-white/30 backdrop-blur-sm font-semibold"
                 >
                 {card}
@@ -57,6 +65,6 @@ export default function JourneyPage() {
             ))}
             </div>
         </div>
-        </div>
-    );
+    </div>
+  );
 }

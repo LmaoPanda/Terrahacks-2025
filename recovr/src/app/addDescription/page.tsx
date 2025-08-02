@@ -12,18 +12,45 @@ export default function addDescription() {
     const injury = searchParams.get("injury") || "My Injury";
     const day = searchParams.get("day");
     const router = useRouter();
-        
+    const [description, setDescription] = useState("");
+    const [metrics, setMetrics] = useState({
+        pain: 5,
+        redness: 5,
+        rangeOfMotion: 5,
+        flexibility: 5,
+    });
+
+    const handleMetricChange = (key: keyof typeof metrics, value: number[]) => {
+    setMetrics({ ...metrics, [key]: value[0] });
+    };
+
+    const [comments, setComments] = useState("");
     const [image, setImage] = useState<string | null>(null);
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImage(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+    const saveData = () => {
+        const data = {
+        injury,
+        day,
+        description,
+        metrics,
+        comments,
+        image,
+            };
+        localStorage.setItem("addDescriptionData", JSON.stringify(data));
+    };
+    const handleContinue = () => {
+        saveData();
+        router.push("/advice")
+    };
     return (
         <div className = "min-h-screen p-8 pb-20 gap-16 sm:p-20">
             <div className = "mb-2">
@@ -77,7 +104,7 @@ export default function addDescription() {
             <div>
                 <Button className = "text-lg mr-2">Back</Button>
                 <Button className = "text-lg mr-2">Log Data</Button>
-                <Button className = "text-lg">Continue to Advice</Button>
+                <Button className = "text-lg" onClick = {handleContinue}>Continue to Advice</Button>
             </div>
         </div>
     );

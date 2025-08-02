@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation"
+
 
 export default function JourneyPage() {
     const [cards, setCards] = useState<string[]>([]);
@@ -18,7 +19,15 @@ export default function JourneyPage() {
     const goToTimeline = (card:string) => {
         router.push(`/timeline?injury=${encodeURIComponent(card)}`)
     }
+    
+    useEffect(() => {
+    const saved = localStorage.getItem("journeyCards");
+    if (saved) setCards(JSON.parse(saved));
+    }, []);
 
+    useEffect(() => {
+        localStorage.setItem("journeyCards", JSON.stringify(cards));
+    }, [cards]);
     return (
         <div className="font-sans items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
         <div className="w-full max-w-sm">

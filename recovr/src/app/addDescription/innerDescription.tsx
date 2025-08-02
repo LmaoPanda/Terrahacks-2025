@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import Image from "next/image";
 
 export default function AddDescription() {
@@ -118,7 +119,7 @@ export default function AddDescription() {
       <div className="flex justify-between items-center mb-2">
         <h1 className="text-5xl font-bold">{injury}</h1>
         <div className="flex space-x-4">
-          <button onClick={handlePrevDay} disabled={dayIndex === 0}>
+          <Button onClick={handlePrevDay} disabled={dayIndex === 0}>
             <Image
               src="/rightArrow.png"
               alt="Left Arrow"
@@ -126,8 +127,8 @@ export default function AddDescription() {
               height={40}
               style={{ opacity: dayIndex === 0 ? 0.5 : 1, transform: 'scaleX(-1)'}}
             />
-          </button>
-          <button onClick={handleNextDay} disabled={dayIndex >= allImages.length - 1}>
+          </Button>
+          <Button onClick={handleNextDay} disabled={dayIndex >= allImages.length - 1}>
             <Image
               src="/rightArrow.png"
               alt="Right Arrow"
@@ -135,7 +136,7 @@ export default function AddDescription() {
               height={40}
               style={{ opacity: dayIndex >= allImages.length - 1 ? 0.5 : 1 }}
             />
-          </button>
+          </Button>
         </div>
       </div>
       <div className="font-sans mb-4">
@@ -198,7 +199,7 @@ export default function AddDescription() {
 
       <div className="p-4 rounded-xl border-2 bg-white/30 backdrop-blur-sm mb-4">
         <h2 className="font-bold mb-2">Upload Image.</h2>
-        <input
+        <Input
           type="file"
           accept="image/*"
           onChange={handleImageUpload}

@@ -246,6 +246,7 @@ export default function AddDescription() {
               }
               max={10}
               step={1}
+              reverseGradient={key === "pain" || key === "redness"}
               className="w-full"
             />
           </div>

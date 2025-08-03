@@ -11,17 +11,18 @@ function Slider({
   value,
   min = 0,
   max = 100,
+  reverseGradient = false, // New prop to reverse gradient
   ...props
-}: React.ComponentProps<typeof SliderPrimitive.Root>) {
+}: React.ComponentProps<typeof SliderPrimitive.Root> & { reverseGradient?: boolean }) {
   const _values = React.useMemo(
     () =>
       Array.isArray(value)
         ? value
         : Array.isArray(defaultValue)
-          ? defaultValue
-          : [min, max],
+        ? defaultValue
+        : [min, max],
     [value, defaultValue, min, max]
-  )
+  );
 
   return (
     <SliderPrimitive.Root
@@ -50,10 +51,8 @@ function Slider({
         />
       </SliderPrimitive.Track>
       {Array.from({ length: _values.length }, (_, index) => {
-        // Calculate the thumb's color based on its value between min and max
         const val = _values[index];
         const percent = (val - min) / (max - min);
-        // Interpolate: ff6f6f (left), white (center), 89E774 (right)
         function hexToRgb(hex: string): [number, number, number] {
           hex = hex.replace('#', '');
           const bigint = parseInt(hex, 16);
@@ -66,12 +65,11 @@ function Slider({
         function lerp(a: number, b: number, t: number): number {
           return a + (b - a) * t;
         }
-        const left = hexToRgb('ff6f6f');
+        const left = hexToRgb(reverseGradient ? '89E774' : 'ff6f6f');
         const center = [255, 255, 255];
-        const right = hexToRgb('89E774');
+        const right = hexToRgb(reverseGradient ? 'ff6f6f' : '89E774');
         let rgb: [number, number, number];
         if (percent <= 0.5) {
-          // Interpolate from left to center
           const t = percent / 0.5;
           rgb = [
             Math.round(lerp(left[0], center[0], t)),
@@ -79,7 +77,6 @@ function Slider({
             Math.round(lerp(left[2], center[2], t))
           ];
         } else {
-          // Interpolate from center to right
           const t = (percent - 0.5) / 0.5;
           rgb = [
             Math.round(lerp(center[0], right[0], t)),
@@ -100,7 +97,7 @@ function Slider({
         );
       })}
     </SliderPrimitive.Root>
-  )
+  );
 }
 
 export { Slider }

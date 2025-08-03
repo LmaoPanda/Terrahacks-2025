@@ -41,22 +41,22 @@ export default function AddDescription() {
     const daysSinceStart = Math.max(1, Math.ceil((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
 
     // Update the dayIndex to match the current day if it is less than daysSinceStart
-    if (dayIndex !== daysSinceStart) {
+    if (dayIndex > daysSinceStart) {
       setDayIndex(daysSinceStart);
     }
 
     // Find the maximum day that has data, but don't exceed days since start
-    let maxDayWithData = Math.min(initialDay, daysSinceStart);
+    let maxDayWithData = 1;
     for (let i = 1; i <= daysSinceStart; i++) {
       const key = `addDescriptionData_${injury}_${i}`;
       const savedData = localStorage.getItem(key);
       if (savedData) {
-        maxDayWithData = Math.max(i, maxDayWithData);
+        maxDayWithData = i;
       }
     }
 
-    setMaxDay(maxDayWithData);
-  }, [injury, initialDay, dayIndex]);
+    setMaxDay(Math.max(maxDayWithData, daysSinceStart));
+  }, [injury]);
 
   // Get historical metrics data for all days
   const getHistoricalData = () => {

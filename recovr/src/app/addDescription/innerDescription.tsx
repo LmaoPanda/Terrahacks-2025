@@ -28,7 +28,7 @@ export default function AddDescription() {
     // Get the initial injury data to find the start date
     const adviceData = localStorage.getItem("adviceData");
     let startDate = new Date();
-    
+
     if (adviceData) {
       const parsed = JSON.parse(adviceData);
       if (parsed.injury === injury && parsed.startDate) {
@@ -39,19 +39,24 @@ export default function AddDescription() {
     // Calculate the maximum possible day based on the start date
     const today = new Date();
     const daysSinceStart = Math.max(1, Math.ceil((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
-    
+
+    // Update the dayIndex to match the current day if it is less than daysSinceStart
+    if (dayIndex !== daysSinceStart) {
+      setDayIndex(daysSinceStart);
+    }
+
     // Find the maximum day that has data, but don't exceed days since start
     let maxDayWithData = Math.min(initialDay, daysSinceStart);
     for (let i = 1; i <= daysSinceStart; i++) {
       const key = `addDescriptionData_${injury}_${i}`;
       const savedData = localStorage.getItem(key);
       if (savedData) {
-        maxDayWithData = Math.min(i, daysSinceStart);
+        maxDayWithData = Math.max(i, maxDayWithData);
       }
     }
-    
+
     setMaxDay(maxDayWithData);
-  }, [injury, initialDay]);
+  }, [injury, initialDay, dayIndex]);
 
   // Get historical metrics data for all days
   const getHistoricalData = () => {

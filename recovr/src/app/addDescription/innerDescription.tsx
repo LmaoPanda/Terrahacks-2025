@@ -140,20 +140,28 @@ export default function AddDescription() {
 
   const handleContinue = () => {
     saveData();
-    // Save data for advice page
-    const adviceData = {
-      injury,
-      day: dayIndex + 1,
-      metrics: {
-        pain: metrics.pain,
-        redness: metrics.redness,
-        rangeOfMotion: metrics.rangeOfMotion,
-        flexibility: metrics.flexibility
-      },
-      comments,
-    };
-    console.log('Saving advice data:', adviceData);
-    localStorage.setItem("adviceData", JSON.stringify(adviceData));
+
+    // Check if this is the first report for this injury
+    const existingData = localStorage.getItem("adviceData");
+    let startDate = new Date().toISOString();
+    
+    if (existingData) {
+      const parsed = JSON.parse(existingData);
+      startDate = parsed.startDate || startDate;
+    }
+
+    // Save the current metrics and comments for tips generation
+    localStorage.setItem(
+      "adviceData",
+      JSON.stringify({
+        injury,
+        day: dayIndex,
+        metrics,
+        comments,
+        startDate, // Include the start date
+        lastReportDate: new Date().toISOString() // Add last report date
+      })
+    );
     router.push("/advice");
   };
 

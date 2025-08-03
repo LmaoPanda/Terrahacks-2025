@@ -7,6 +7,7 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function AddDescription() {
   const searchParams = useSearchParams();
@@ -14,14 +15,60 @@ export default function AddDescription() {
   const initialDay = Number(searchParams?.get("day")) || 1;
   const router = useRouter();
 
-  // Load all images (days) for this injury
+  // Load all images and track maximum day
   const [allImages, setAllImages] = useState<string[]>([]);
   const [dayIndex, setDayIndex] = useState(initialDay);
+  const [maxDay, setMaxDay] = useState(initialDay);
 
   useEffect(() => {
+    // Load images
     const daysData = JSON.parse(localStorage.getItem("injuryDays") || "{}");
     setAllImages(daysData[injury] || []);
-  }, [injury]);
+
+    // Get the initial injury data to find the start date
+    const adviceData = localStorage.getItem("adviceData");
+    let startDate = new Date();
+    
+    if (adviceData) {
+      const parsed = JSON.parse(adviceData);
+      if (parsed.injury === injury && parsed.startDate) {
+        startDate = new Date(parsed.startDate);
+      }
+    }
+
+    // Calculate the maximum possible day based on the start date
+    const today = new Date();
+    const daysSinceStart = Math.max(1, Math.ceil((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
+    
+    // Find the maximum day that has data, but don't exceed days since start
+    let maxDayWithData = Math.min(initialDay, daysSinceStart);
+    for (let i = 1; i <= daysSinceStart; i++) {
+      const key = `addDescriptionData_${injury}_${i}`;
+      const savedData = localStorage.getItem(key);
+      if (savedData) {
+        maxDayWithData = Math.min(i, daysSinceStart);
+      }
+    }
+    
+    setMaxDay(maxDayWithData);
+  }, [injury, initialDay]);
+
+  // Get historical metrics data for all days
+  const getHistoricalData = () => {
+    const data = [];
+    for (let i = 1; i <= maxDay; i++) {
+      const key = `addDescriptionData_${injury}_${i}`;
+      const savedData = localStorage.getItem(key);
+      if (savedData) {
+        const dayData = JSON.parse(savedData);
+        data.push({
+          day: i,
+          ...dayData.metrics
+        });
+      }
+    }
+    return data;
+  };
 
   // Load data for current day
   const storageKey = `addDescriptionData_${injury}_${dayIndex}`;
@@ -138,31 +185,62 @@ export default function AddDescription() {
     }
   };
 
-  const handleContinue = () => {
-    saveData();
+  const handleContinue = async () => {
+    try {
+      // First, save the current day's data
+      saveData();
 
-    // Check if this is the first report for this injury
-    const existingData = localStorage.getItem("adviceData");
-    let startDate = new Date().toISOString();
-    
-    if (existingData) {
-      const parsed = JSON.parse(existingData);
-      startDate = parsed.startDate || startDate;
-    }
+      // Check if this is the first report for this injury
+      const existingData = localStorage.getItem("adviceData");
+      let startDate = new Date().toISOString();
+      
+      if (existingData) {
+        const parsed = JSON.parse(existingData);
+        startDate = parsed.startDate || startDate;
+      }
 
-    // Save the current metrics and comments for tips generation
-    localStorage.setItem(
-      "adviceData",
-      JSON.stringify({
+      // Create and save the advice data
+      const adviceDataObject = {
         injury,
-        day: Math.max(1, dayIndex), // Ensure day is at least 1
+        day: dayIndex,
         metrics,
         comments,
-        startDate, // Include the start date
-        lastReportDate: new Date().toISOString() // Add last report date
-      })
-    );
-    router.push("/advice");
+        startDate,
+        lastReportDate: new Date().toISOString()
+      };
+
+      // Save the current metrics and comments for tips generation
+      localStorage.setItem(
+        "adviceData",
+        JSON.stringify(adviceDataObject)
+      );
+
+      // Save or update the day-specific data
+      const dayKey = `addDescriptionData_${injury}_${dayIndex}`;
+      const dayData = {
+        description,
+        metrics,
+        comments,
+        image,
+        // Add timestamp to ensure the data is fresh
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem(dayKey, JSON.stringify(dayData));
+
+      // Verify that the data was saved successfully
+      const verifyDayData = localStorage.getItem(dayKey);
+      const verifyAdviceData = localStorage.getItem("adviceData");
+      
+      if (!verifyDayData || !verifyAdviceData) {
+        throw new Error("Failed to save data");
+      }
+
+      // Navigate to advice page with the specific day as a query parameter
+      router.push(`/advice?day=${dayIndex}&injury=${encodeURIComponent(injury)}`);
+    } catch (error) {
+      console.error("Error saving data:", error);
+      // You could add an error notification here if needed
+    }
   };
 
   const sendBack = () => {
@@ -175,7 +253,18 @@ export default function AddDescription() {
     if (dayIndex > 1) setDayIndex(dayIndex - 1);
   };
   const handleNextDay = () => {
-    if (dayIndex < allImages.length) setDayIndex(dayIndex + 1);
+    // Only allow going to the next day if it's available based on the start date
+    const adviceData = localStorage.getItem("adviceData");
+    if (adviceData) {
+      const { startDate } = JSON.parse(adviceData);
+      const start = new Date(startDate);
+      const today = new Date();
+      const daysSinceStart = Math.ceil((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (dayIndex < daysSinceStart && dayIndex <= maxDay) {
+        setDayIndex(dayIndex + 1);
+      }
+    }
   };
 
   return (
@@ -199,7 +288,7 @@ export default function AddDescription() {
           </Button>
           <Button 
             onClick={handleNextDay} 
-            disabled={dayIndex >= allImages.length}
+            disabled={dayIndex > maxDay}
             variant="ghost"
             className="hover:bg-transparent focus:bg-transparent"
           >
@@ -208,7 +297,7 @@ export default function AddDescription() {
               alt="Right Arrow"
               width={40}
               height={40}
-              style={{ opacity: dayIndex >= allImages.length ? 0.5 : 1 }}
+              style={{ opacity: dayIndex > maxDay ? 0.5 : 1 }}
             />
           </Button>
         </div>
@@ -258,7 +347,7 @@ export default function AddDescription() {
               <span>1–10</span>
             </div>
             <Slider
-              defaultValue={[metrics[key as keyof typeof metrics]]}
+              value={[metrics[key as keyof typeof metrics]]}
               onValueChange={(value) =>
                 handleMetricChange(key as keyof typeof metrics, value)
               }
@@ -282,6 +371,45 @@ export default function AddDescription() {
           placeholder="Add any problems or notes (optional)..."
           className="w-full bg-transparent border-0 italic focus-visible:ring-0"
         />
+      </div>
+
+      <div className="p-4 rounded-xl border-2 bg-white/30 backdrop-blur-sm mb-4">
+        <h2 className="font-bold mb-2">Metrics History.</h2>
+        <div className="w-full h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={getHistoricalData()}
+              margin={{ top: 5, right: 30, left: 50, bottom: 25 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="day" 
+                label={{ 
+                  value: 'Day of Recovery', 
+                  position: 'bottom',
+                  offset: 0
+                }}
+              />
+              <YAxis 
+                domain={[0, 10]} 
+                label={{ 
+                  value: 'Severity (1-10)', 
+                  angle: -90, 
+                  position: 'insideLeft',
+                  offset: -15,
+                  dx: 10,
+                  dy: 50
+                }}
+              />
+              <Tooltip />
+              <Legend verticalAlign="top" height={36}/>
+              <Line type="linear" dataKey="pain" stroke="#ef4444" name="Pain" />
+              <Line type="linear" dataKey="redness" stroke="#f97316" name="Redness" />
+              <Line type="linear" dataKey="rangeOfMotion" stroke="#3b82f6" name="Range of Motion" />
+              <Line type="linear" dataKey="flexibility" stroke="#22c55e" name="Flexibility" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       <div className="p-4 rounded-xl border-2 bg-white/30 backdrop-blur-sm mb-4">

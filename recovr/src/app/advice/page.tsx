@@ -19,45 +19,70 @@ interface InjuryData {
 
 export default function AdvicePage() {
   const router = useRouter();
+  const [searchParams, setSearchParams] = useState<URLSearchParams | null>(null);
+  const [injuryParam, setInjuryParam] = useState<string | null>(null);
+  const [dayParam, setDayParam] = useState<string | null>(null);
+  
   const [data, setData] = useState<InjuryData | null>(null);
   const [advice, setAdvice] = useState<string>("Loading advice...");
   const [exercises, setExercises] = useState<string[]>([]);
   const [dateSummary, setDateSummary] = useState<string>("");
 
+  // Initialize URL parameters after mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setSearchParams(params);
+    setInjuryParam(params.get('injury'));
+    setDayParam(params.get('day'));
+  }, []);
+
   const handleBack = () => {
-    router.push(`/addDescription?injury=${encodeURIComponent(data?.injury || '')}&day=${data?.day || 1}`);
+    router.push(`/addDescription?injury=${encodeURIComponent(injuryParam || '')}&day=${dayParam || 1}`);
   };
 
   useEffect(() => {
-    const stored = localStorage.getItem("adviceData");
-    console.log("Stored data:", stored);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      console.log("Parsed data:", parsed);
+    if (!injuryParam || !dayParam) return;
 
-      // Calculate days since injury (ensure it starts from 1)
-      const startDate = new Date(parsed.startDate);
+    // Get the specific day's data from localStorage
+    const key = `addDescriptionData_${injuryParam}_${dayParam}`;
+    const stored = localStorage.getItem(key);
+    console.log("Stored data for day:", stored);
+    
+    if (!stored) {
+      setAdvice("No data found for this day.");
+      setExercises([]);
+      return;
+    }
+
+    try {
+      const dayData = JSON.parse(stored);
       const today = new Date();
-      const daysSinceStart = Math.max(1, Math.ceil((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
       
-      // Update the data with calculated day
+      // Get the initial injury data to get the start date
+      const adviceData = JSON.parse(localStorage.getItem("adviceData") || "{}");
+      const startDate = new Date(adviceData.startDate || new Date());
+      
+      // Create the data object with the specific day's information
       const updatedData = {
-        ...parsed,
-        day: daysSinceStart
+        injury: injuryParam,
+        startDate: startDate.toISOString(),
+        day: parseInt(dayParam),
+        metrics: dayData.metrics,
+        comments: dayData.comments
       };
       
       setData(updatedData);
       
       // Set date summary
-      const lastReportDate = parsed.lastReportDate ? new Date(parsed.lastReportDate) : today;
       setDateSummary(
-        `${formatRelative(startDate, today)} (Last updated ${formatDistance(lastReportDate, today, { addSuffix: true })})`
+        `${formatRelative(startDate, today)} (Day ${dayParam})`
       );
 
       const { injury, metrics, comments } = updatedData;
-      console.log("Extracted data:", { injury, day: daysSinceStart, metrics, comments });
+      const currentDay = parseInt(dayParam);
+      console.log("Extracted data:", { injury, day: currentDay, metrics, comments });
 
-      // Call Gemini API with updated day count
+      // Call Gemini API with the specific day
       fetch("/api/getTips", {
         method: "POST",
         headers: {
@@ -65,28 +90,52 @@ export default function AdvicePage() {
         },
         body: JSON.stringify({
           injury,
-          day: daysSinceStart,
+          day: currentDay,
           metrics,
           comments,
         }),
       })
-        .then((res) => res.json())
+        .then(async (res) => {
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+          }
+          return res.json();
+        })
         .then((res) => {
-          console.log("API Response:", res);
           if (res.error) {
             throw new Error(res.error);
           }
-          console.log("Setting advice:", res.tips);
-          console.log("Setting exercises:", res.exercises);
-          setAdvice(res.tips || "No tips available at the moment.");
+          setAdvice(res.tips);
           setExercises(res.exercises || []);
         })
         .catch((err) => {
           console.error("Error fetching tips:", err);
-          setAdvice("Failed to load tips. Please try again later.");
+          setAdvice("Failed to load tips. Please try refreshing the page or go back and try again.");
+          setExercises([
+            "Basic Movement: Start with gentle movements within your comfort zone",
+            "Rest: Ensure you're giving your injury adequate rest between activities"
+          ]);
         });
+    } catch (err) {
+      console.error("Error processing data:", err);
+      setAdvice("Error processing injury data. Please try again.");
+      setExercises([]);
     }
-  }, []);
+  }, [injuryParam, dayParam]);
+
+  if (!injuryParam || !dayParam) {
+    return (
+      <div className="min-h-screen p-8 pb-20 gap-16 sm:p-20 bg-gradient-to-b from-rose-200 to-rose-400 text-white">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-2">Recovery Advice</h1>
+          <p className="text-lg text-gray-200">Missing injury or day parameter.</p>
+          <Button className="mt-4 text-lg" onClick={handleBack}>
+            Back to Description
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!data) {
     return (
@@ -94,27 +143,26 @@ export default function AdvicePage() {
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Recovery Advice</h1>
           <p className="text-lg text-gray-200">Loading your injury data...</p>
+          <Button className="mt-4 text-lg" onClick={handleBack}>
+            Back to Description
+          </Button>
         </div>
         <div className="p-6 rounded-xl border-2 bg-white/30 backdrop-blur-sm mb-8">
           <h2 className="font-bold mb-4 text-xl">Tips:</h2>
-          <p className="leading-relaxed">
-            Here are some general tips to help with your recovery. Replace this
-            content with personalized advice later.
-          </p>
+          <div className="animate-pulse">
+            <div className="h-4 bg-white/20 rounded w-3/4 mb-4"></div>
+            <div className="h-4 bg-white/20 rounded w-1/2"></div>
+          </div>
         </div>
         <div className="p-6 rounded-xl border-2 bg-white/30 backdrop-blur-sm">
           <h2 className="font-bold mb-4 text-xl">Recommended Exercises:</h2>
           <div className="space-y-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex gap-4 items-start">
-                <input
-                  type="checkbox"
-                  disabled
-                  className="mt-2 h-4 w-4 rounded border-gray-300"
-                />
-                <div>
-                  <h3 className="font-semibold text-lg mb-1">Exercise {i}</h3>
-                  <p className="leading-relaxed text-gray-100">Description for exercise {i}</p>
+            {[1, 2].map((i) => (
+              <div key={i} className="animate-pulse flex gap-4 items-start">
+                <div className="mt-2 h-4 w-4 rounded bg-white/20"></div>
+                <div className="flex-1">
+                  <div className="h-4 bg-white/20 rounded w-1/4 mb-2"></div>
+                  <div className="h-4 bg-white/20 rounded w-3/4"></div>
                 </div>
               </div>
             ))}

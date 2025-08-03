@@ -1,31 +1,65 @@
+import { GoogleGenAI } from "@google/genai";
+import * as dotenv from 'dotenv';
 
-// Gemini API integration for generating a 2-sentence description
-// Receives: { injury, day, description, metrics, comments, image }
-// Returns: 2-sentence summary from Gemini
+// Load environment variables from .env file
+dotenv.config();
 
-// You need to set your Gemini API key in the environment or replace below
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "YOUR_GEMINI_API_KEY";
+// Initialize Gemini with API key from environment
+const genAI = new GoogleGenAI({
+  apiKey: process.env.GOOGLE_API_KEY
+});
 
+async function generateContent(injuryData) {
+  try {
+    // Get the generative model (using Flash for faster responses)
+    const model = genAI.models;
+    
+    // Create the prompt with injury data
+    const { injury, day, description, metrics, comments } = injuryData;
+    const prompt = `You are a helpful assistant for injury recovery tracking.
 
-export async function getGeminiDescription({ injury, day, description, metrics, comments, image }) {
-  const prompt = `You are a helpful assistant for injury recovery tracking.\n\nGiven the following information about a user's injury, generate a concise, empathetic, and informative 2-sentence description summarizing their current state.\n\nINJURY: ${injury}\nDAY: ${day}\nUSER DESCRIPTION: ${description}\nPAIN (1-10): ${metrics?.pain}\nREDNESS (1-10): ${metrics?.redness}\nRANGE OF MOTION (1-10): ${metrics?.rangeOfMotion}\nFLEXIBILITY (1-10): ${metrics?.flexibility}\nADDITIONAL COMMENTS: ${comments || "None"}\n${image ? "An image is also provided, but you may ignore it for now." : ""}\n\nYour response must be exactly 2 sentences.`;
+Given the following information about a user's injury, generate a concise, empathetic, and informative 2-sentence description summarizing their current state. Never mention a numerical for any thing that they say (ex. pain is 7).
 
-  const body = {
-    contents: [{ parts: [{ text: prompt }] }],
-  };
+INJURY: ${injury}
+DAY: ${day}
+PAIN (1-10): ${metrics?.pain}
+REDNESS (1-10): ${metrics?.redness}
+RANGE OF MOTION (1-10): ${metrics?.rangeOfMotion}
+FLEXIBILITY (1-10): ${metrics?.flexibility}
+ADDITIONAL COMMENTS: ${comments || "None"}
 
-  const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + GEMINI_API_KEY, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
+Your response must be exactly 2 sentences.`;
 
-  if (!response.ok) {
-    throw new Error("Gemini API error: " + response.statusText);
+    // Generate content
+    const result = await model.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt
+    });
+    return result.text;
+  } catch (error) {
+    console.error('Error generating content:', error);
+    throw error; // Propagate error to component
   }
-  const data = await response.json();
-  // Gemini's response is in data.candidates[0].content.parts[0].text
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text || "No description generated.";
+}
+
+export async function getGeminiDescription(injuryData) {
+  try {
+    const response = await fetch('/api/gemini', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(injuryData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch Gemini description');
+    }
+
+    const data = await response.json();
+    return data.summary;
+  } catch (error) {
+    console.error('Error fetching Gemini description:', error);
+    throw error;
+  }
 }

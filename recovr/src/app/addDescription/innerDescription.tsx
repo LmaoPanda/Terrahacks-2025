@@ -10,8 +10,8 @@ import Image from "next/image";
 
 export default function AddDescription() {
   const searchParams = useSearchParams();
-  const injury = searchParams.get("injury") || "My Injury";
-  const initialDay = Number(searchParams.get("day")) || 0;
+  const injury = searchParams?.get("injury") || "My Injury";
+  const initialDay = Number(searchParams?.get("day")) || 0;
   const router = useRouter();
 
   // Load all images (days) for this injury
@@ -29,6 +29,9 @@ export default function AddDescription() {
   const initial = saved ? JSON.parse(saved) : null;
 
   const [description, setDescription] = useState(initial?.description || "");
+  const [geminiSummary, setGeminiSummary] = useState<string>("");
+  const [loadingGemini, setLoadingGemini] = useState(false);
+  const [geminiError, setGeminiError] = useState<string>("");
   const [metrics, setMetrics] = useState(
     initial?.metrics || {
       pain: 5,
@@ -57,6 +60,45 @@ export default function AddDescription() {
     setComments(initialDayData?.comments || "");
     setImage(initialDayData?.image || (allImages[dayIndex] || null));
   }, [dayIndex, injury, allImages]);
+
+
+  // Handler to fetch Gemini summary on button click
+  const handleGetSummary = async () => {
+    if (!description && !comments) {
+      setGeminiSummary("");
+      return;
+    }
+    setLoadingGemini(true);
+    setGeminiError("");
+    try {
+      const response = await fetch("/api/gemini", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          injury,
+          day: dayIndex + 1,
+          description,
+          metrics,
+          comments,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch Gemini description");
+      }
+
+      const data = await response.json();
+      setGeminiSummary(data.summary);
+      saveData(description, metrics, comments, image);
+    } catch (err) {
+      console.error("Gemini error:", err);
+      setGeminiError("Could not generate summary. Please try again.");
+    } finally {
+      setLoadingGemini(false);
+    }
+  };
 
   const saveData = (
     desc = description,
@@ -147,15 +189,27 @@ export default function AddDescription() {
 
       <div className="p-4 rounded-xl border-2 bg-white/30 backdrop-blur-sm mb-4">
         <h2 className="font-bold mb-2">Description.</h2>
-        <Textarea
-          value={description}
-          onChange={(e) => {
-            setDescription(e.target.value);
-            saveData(e.target.value, metrics, comments, image);
-          }}
-          placeholder="Describe your injury..."
-          className="w-full bg-transparent border-0 italic focus-visible:ring-0"
-        />
+        {/* Show AI-generated summary or prompt to generate */}
+        {loadingGemini ? (
+          <span className="italic text-gray-500">Generating summary...</span>
+        ) : geminiError ? (
+          <span className="text-red-500">{geminiError}</span>
+        ) : geminiSummary ? (
+          <div className="bg-blue-50 border border-blue-200 rounded p-2 text-blue-900 mb-2">
+            <strong>
+              <Image
+                src="/lightbulb-icon.png"
+                alt="Light Bulb"
+                width={20}
+                height={20}
+                className="inline-block mr-1"
+              />
+              Quick Overview:
+            </strong> {geminiSummary}
+          </div>
+        ) : (
+          <span className="italic text-gray-500">No summary generated yet. Click "Get Summary" below.</span>
+        )}
       </div>
 
       <div className="p-4 rounded-xl border-2 bg-white/30 backdrop-blur-sm mb-4">
@@ -219,8 +273,11 @@ export default function AddDescription() {
         <Button className="text-lg mr-2" onClick={() => saveData()}>
           Log Data
         </Button>
-        <Button className="text-lg" onClick={handleContinue}>
+        <Button className="text-lg mr-2" onClick={handleContinue}>
           Continue to Advice
+        </Button>
+        <Button className="text-lg" onClick={handleGetSummary}>
+          Get Summary
         </Button>
       </div>
     </div>

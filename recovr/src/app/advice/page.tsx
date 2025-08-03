@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { formatDistance, formatRelative } from "date-fns";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 interface InjuryData {
   injury: string;
@@ -16,10 +18,15 @@ interface InjuryData {
 }
 
 export default function AdvicePage() {
+  const router = useRouter();
   const [data, setData] = useState<InjuryData | null>(null);
   const [advice, setAdvice] = useState<string>("Loading advice...");
   const [exercises, setExercises] = useState<string[]>([]);
   const [dateSummary, setDateSummary] = useState<string>("");
+
+  const handleBack = () => {
+    router.push(`/addDescription?injury=${encodeURIComponent(data?.injury || '')}&day=${data?.day || 1}`);
+  };
 
   useEffect(() => {
     const stored = localStorage.getItem("adviceData");
@@ -119,11 +126,16 @@ export default function AdvicePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b p-8 pb-20 gap-16 sm:p-20">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">
-          Day {data.day} of Recovery
-        </h1>
-        <p className="text-lg text-gray-200">Injury reported {dateSummary}</p>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-4xl font-bold mb-2">
+            Day {data.day} of Recovery
+          </h1>
+          <p className="text-lg text-gray-200">Injury reported {dateSummary}</p>
+        </div>
+        <Button className="text-lg" onClick={handleBack}>
+          Back
+        </Button>
       </div>
 
       {/* Advice Section */}

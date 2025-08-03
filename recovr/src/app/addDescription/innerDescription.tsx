@@ -183,7 +183,12 @@ export default function AddDescription() {
       <div className="flex justify-between items-center mb-2">
         <h1 className="text-5xl font-bold">{injury}</h1>
         <div className="flex space-x-4">
-          <Button onClick={handlePrevDay} disabled={dayIndex === 1}>
+          <Button 
+            onClick={handlePrevDay} 
+            disabled={dayIndex === 1}
+            variant="ghost"
+            className="hover:bg-transparent focus:bg-transparent"
+          >
             <Image
               src="/rightArrow.png"
               alt="Left Arrow"
@@ -192,7 +197,12 @@ export default function AddDescription() {
               style={{ opacity: dayIndex === 1 ? 0.5 : 1, transform: 'scaleX(-1)'}}
             />
           </Button>
-          <Button onClick={handleNextDay} disabled={dayIndex >= allImages.length}>
+          <Button 
+            onClick={handleNextDay} 
+            disabled={dayIndex >= allImages.length}
+            variant="ghost"
+            className="hover:bg-transparent focus:bg-transparent"
+          >
             <Image
               src="/rightArrow.png"
               alt="Right Arrow"

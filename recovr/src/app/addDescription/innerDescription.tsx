@@ -132,10 +132,6 @@ export default function AddDescription() {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch Gemini description");
-      }
-
       const data = await response.json();
       setGeminiSummary(data.summary);
       saveData(description, metrics, comments, image);

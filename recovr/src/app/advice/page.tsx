@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { formatDistance, formatRelative } from "date-fns";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface InjuryData {
   injury: string;
@@ -207,7 +208,7 @@ export default function AdvicePage() {
             
             return (
               <div key={i} className="flex gap-4 items-start">
-                <input
+                <Input
                   type="checkbox"
                   className="mt-2 h-4 w-4 rounded border-gray-300"
                   onChange={(e) => {

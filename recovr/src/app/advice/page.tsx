@@ -28,10 +28,10 @@ export default function AdvicePage() {
       const parsed = JSON.parse(stored);
       console.log("Parsed data:", parsed);
 
-      // Calculate days since injury
+      // Calculate days since injury (ensure it starts from 1)
       const startDate = new Date(parsed.startDate);
       const today = new Date();
-      const daysSinceStart = Math.ceil((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      const daysSinceStart = Math.max(1, Math.ceil((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
       
       // Update the data with calculated day
       const updatedData = {
@@ -97,11 +97,21 @@ export default function AdvicePage() {
         </div>
         <div className="p-6 rounded-xl border-2 bg-white/30 backdrop-blur-sm">
           <h2 className="font-bold mb-4 text-xl">Recommended Exercises:</h2>
-          <ul className="list-disc pl-6 space-y-4">
-            <li className="leading-relaxed">Exercise 1: Description for exercise 1</li>
-            <li className="leading-relaxed">Exercise 2: Description for exercise 2</li>
-            <li className="leading-relaxed">Exercise 3: Description for exercise 3</li>
-          </ul>
+          <div className="space-y-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex gap-4 items-start">
+                <input
+                  type="checkbox"
+                  disabled
+                  className="mt-2 h-4 w-4 rounded border-gray-300"
+                />
+                <div>
+                  <h3 className="font-semibold text-lg mb-1">Exercise {i}</h3>
+                  <p className="leading-relaxed text-gray-100">Description for exercise {i}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -125,11 +135,30 @@ export default function AdvicePage() {
       {/* Exercises Section */}
       <div className="p-6 rounded-xl border-2 bg-white/30 backdrop-blur-sm">
         <h2 className="font-bold mb-4 text-xl">Recommended Exercises:</h2>
-        <ul className="list-disc pl-6 space-y-4">
-          {exercises.map((ex, i) => (
-            <li key={i} className="leading-relaxed">{ex}</li>
-          ))}
-        </ul>
+        <div className="space-y-6">
+          {exercises.map((ex, i) => {
+            // Split the exercise into name and description (assuming format: "Exercise Name: Description")
+            const [name, ...descParts] = ex.split(': ');
+            const description = descParts.join(': '); // Rejoin in case description contains colons
+            
+            return (
+              <div key={i} className="flex gap-4 items-start">
+                <input
+                  type="checkbox"
+                  className="mt-2 h-4 w-4 rounded border-gray-300"
+                  onChange={(e) => {
+                    // You can add functionality here to save the checked state if needed
+                    console.log(`Exercise ${i + 1} ${e.target.checked ? 'completed' : 'uncompleted'}`);
+                  }}
+                />
+                <div>
+                  <h3 className="font-semibold text-lg mb-1">{name}</h3>
+                  <p className="leading-relaxed text-gray-100">{description}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

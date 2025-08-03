@@ -11,7 +11,7 @@ import Image from "next/image";
 export default function AddDescription() {
   const searchParams = useSearchParams();
   const injury = searchParams?.get("injury") || "My Injury";
-  const initialDay = Number(searchParams?.get("day")) || 0;
+  const initialDay = Number(searchParams?.get("day")) || 1;
   const router = useRouter();
 
   // Load all images (days) for this injury
@@ -155,7 +155,7 @@ export default function AddDescription() {
       "adviceData",
       JSON.stringify({
         injury,
-        day: dayIndex,
+        day: Math.max(1, dayIndex), // Ensure day is at least 1
         metrics,
         comments,
         startDate, // Include the start date
@@ -172,10 +172,10 @@ export default function AddDescription() {
 
   // Arrow navigation handlers
   const handlePrevDay = () => {
-    if (dayIndex > 0) setDayIndex(dayIndex - 1);
+    if (dayIndex > 1) setDayIndex(dayIndex - 1);
   };
   const handleNextDay = () => {
-    if (dayIndex < allImages.length - 1) setDayIndex(dayIndex + 1);
+    if (dayIndex < allImages.length) setDayIndex(dayIndex + 1);
   };
 
   return (
@@ -183,29 +183,29 @@ export default function AddDescription() {
       <div className="flex justify-between items-center mb-2">
         <h1 className="text-5xl font-bold">{injury}</h1>
         <div className="flex space-x-4">
-          <Button onClick={handlePrevDay} disabled={dayIndex === 0}>
+          <Button onClick={handlePrevDay} disabled={dayIndex === 1}>
             <Image
               src="/rightArrow.png"
               alt="Left Arrow"
               width={40}
               height={40}
-              style={{ opacity: dayIndex === 0 ? 0.5 : 1, transform: 'scaleX(-1)'}}
+              style={{ opacity: dayIndex === 1 ? 0.5 : 1, transform: 'scaleX(-1)'}}
             />
           </Button>
-          <Button onClick={handleNextDay} disabled={dayIndex >= allImages.length - 1}>
+          <Button onClick={handleNextDay} disabled={dayIndex >= allImages.length}>
             <Image
               src="/rightArrow.png"
               alt="Right Arrow"
               width={40}
               height={40}
-              style={{ opacity: dayIndex >= allImages.length - 1 ? 0.5 : 1 }}
+              style={{ opacity: dayIndex >= allImages.length ? 0.5 : 1 }}
             />
           </Button>
         </div>
       </div>
       <div className="font-sans mb-4">
         <div>
-          <h1 className="text-3xl">Day {dayIndex + 1} ---------------------------</h1>
+          <h1 className="text-3xl">Day {dayIndex} ---------------------------</h1>
         </div>
       </div>
 

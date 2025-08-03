@@ -260,13 +260,49 @@ export default function AddDescription() {
   // Arrow navigation handlers
   const handlePrevDay = () => {
     if (dayIndex > 1) {
-      setDayIndex(dayIndex - 1);
+      const newDayIndex = dayIndex - 1;
+      setDayIndex(newDayIndex);
+
+      // Load data for the new day
+      const key = `addDescriptionData_${injury}_${newDayIndex}`;
+      const savedDay = localStorage.getItem(key);
+      const initialDayData = savedDay ? JSON.parse(savedDay) : null;
+
+      setDescription(initialDayData?.description || "");
+      setMetrics(
+        initialDayData?.metrics || {
+          pain: 5,
+          redness: 5,
+          rangeOfMotion: 5,
+          flexibility: 5,
+        }
+      );
+      setComments(initialDayData?.comments || "");
+      setImage(initialDayData?.image || (allImages[newDayIndex] || null));
     }
   };
 
   const handleNextDay = () => {
     if (dayIndex < maxDay) {
-      setDayIndex(dayIndex + 1);
+      const newDayIndex = dayIndex + 1;
+      setDayIndex(newDayIndex);
+
+      // Load data for the new day
+      const key = `addDescriptionData_${injury}_${newDayIndex}`;
+      const savedDay = localStorage.getItem(key);
+      const initialDayData = savedDay ? JSON.parse(savedDay) : null;
+
+      setDescription(initialDayData?.description || "");
+      setMetrics(
+        initialDayData?.metrics || {
+          pain: 5,
+          redness: 5,
+          rangeOfMotion: 5,
+          flexibility: 5,
+        }
+      );
+      setComments(initialDayData?.comments || "");
+      setImage(initialDayData?.image || (allImages[newDayIndex] || null));
     }
   };
 

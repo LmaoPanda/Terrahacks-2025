@@ -140,6 +140,20 @@ export default function AddDescription() {
 
   const handleContinue = () => {
     saveData();
+    // Save data for advice page
+    const adviceData = {
+      injury,
+      day: dayIndex + 1,
+      metrics: {
+        pain: metrics.pain,
+        redness: metrics.redness,
+        rangeOfMotion: metrics.rangeOfMotion,
+        flexibility: metrics.flexibility
+      },
+      comments,
+    };
+    console.log('Saving advice data:', adviceData);
+    localStorage.setItem("adviceData", JSON.stringify(adviceData));
     router.push("/advice");
   };
 

@@ -260,18 +260,12 @@ export default function AddDescription() {
   // Arrow navigation handlers
   const handlePrevDay = () => {
     if (dayIndex > 1) {
-      const prevDayKey = `addDescriptionData_${injury}_${dayIndex - 1}`;
-      const prevDayData = localStorage.getItem(prevDayKey);
-      if (prevDayData) {
-        setDayIndex(dayIndex - 1);
-      }
+      setDayIndex(dayIndex - 1);
     }
   };
 
   const handleNextDay = () => {
-    const nextDayKey = `addDescriptionData_${injury}_${dayIndex + 1}`;
-    const nextDayData = localStorage.getItem(nextDayKey);
-    if (nextDayData) {
+    if (dayIndex < maxDay) {
       setDayIndex(dayIndex + 1);
     }
   };

@@ -259,20 +259,20 @@ export default function AddDescription() {
 
   // Arrow navigation handlers
   const handlePrevDay = () => {
-    if (dayIndex > 1) setDayIndex(dayIndex - 1);
-  };
-  const handleNextDay = () => {
-    // Only allow going to the next day if it's available based on the start date
-    const adviceData = localStorage.getItem("adviceData");
-    if (adviceData) {
-      const { startDate } = JSON.parse(adviceData);
-      const start = new Date(startDate);
-      const today = new Date();
-      const daysSinceStart = Math.ceil((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-      
-      if (dayIndex < daysSinceStart && dayIndex <= maxDay) {
-        setDayIndex(dayIndex + 1);
+    if (dayIndex > 1) {
+      const prevDayKey = `addDescriptionData_${injury}_${dayIndex - 1}`;
+      const prevDayData = localStorage.getItem(prevDayKey);
+      if (prevDayData) {
+        setDayIndex(dayIndex - 1);
       }
+    }
+  };
+
+  const handleNextDay = () => {
+    const nextDayKey = `addDescriptionData_${injury}_${dayIndex + 1}`;
+    const nextDayData = localStorage.getItem(nextDayKey);
+    if (nextDayData) {
+      setDayIndex(dayIndex + 1);
     }
   };
 

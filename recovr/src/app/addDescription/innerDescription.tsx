@@ -45,6 +45,9 @@ export default function AddDescription() {
       setDayIndex(daysSinceStart);
     }
 
+    // Update the URL to reflect the current day index
+    router.replace(`/addDescription?injury=${encodeURIComponent(injury)}&day=${dayIndex}`);
+
     // Find the maximum day that has data, but don't exceed days since start
     let maxDayWithData = 1;
     for (let i = 1; i <= daysSinceStart; i++) {
@@ -56,7 +59,7 @@ export default function AddDescription() {
     }
 
     setMaxDay(Math.max(maxDayWithData, daysSinceStart));
-  }, [injury]);
+  }, [injury, dayIndex]);
 
   // Get historical metrics data for all days
   const getHistoricalData = () => {
@@ -263,6 +266,9 @@ export default function AddDescription() {
       const newDayIndex = dayIndex - 1;
       setDayIndex(newDayIndex);
 
+      // Update the URL to reflect the new day index
+      router.replace(`/addDescription?injury=${encodeURIComponent(injury)}&day=${newDayIndex}`);
+
       // Load data for the new day
       const key = `addDescriptionData_${injury}_${newDayIndex}`;
       const savedDay = localStorage.getItem(key);
@@ -286,6 +292,9 @@ export default function AddDescription() {
     if (dayIndex < maxDay) {
       const newDayIndex = dayIndex + 1;
       setDayIndex(newDayIndex);
+
+      // Update the URL to reflect the new day index
+      router.replace(`/addDescription?injury=${encodeURIComponent(injury)}&day=${newDayIndex}`);
 
       // Load data for the new day
       const key = `addDescriptionData_${injury}_${newDayIndex}`;

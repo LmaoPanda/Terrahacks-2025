@@ -58,9 +58,12 @@ export default function AdvicePage() {
       const dayData = JSON.parse(stored);
       const today = new Date();
       
-      // Get the initial injury data to get the start date
+      // Get the initial injury data to get the start date and other info
       const adviceData = JSON.parse(localStorage.getItem("adviceData") || "{}");
       const startDate = new Date(adviceData.startDate || new Date());
+      
+      // Get the report date from the day's data or fallback to adviceData
+      const reportDate = new Date(dayData.timestamp || adviceData.lastReportDate || new Date());
       
       // Create the data object with the specific day's information
       const updatedData = {
@@ -68,14 +71,15 @@ export default function AdvicePage() {
         startDate: startDate.toISOString(),
         day: parseInt(dayParam),
         metrics: dayData.metrics,
-        comments: dayData.comments
+        comments: dayData.comments,
+        reportDate: reportDate.toISOString()
       };
       
       setData(updatedData);
       
-      // Set date summary
+      // Set date summary using the report date
       setDateSummary(
-        `${formatRelative(startDate, today)} (Day ${dayParam})`
+        `${formatRelative(reportDate, today)} (Day ${dayParam})`
       );
 
       const { injury, metrics, comments } = updatedData;

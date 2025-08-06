@@ -125,7 +125,7 @@ export default function AddDescription() {
         },
         body: JSON.stringify({
           injury,
-          day: dayIndex + 1,
+          day: dayIndex,
           description,
           metrics,
           comments,
@@ -153,7 +153,15 @@ export default function AddDescription() {
     comm = comments,
     img = image
   ) => {
-    const data = { injury, day: dayIndex, description: desc, metrics: met, comments: comm, image: img };
+    const data = {
+      injury,
+      day: dayIndex,
+      description: desc,
+      metrics: met,
+      comments: comm,
+      image: img,
+      timestamp: new Date().toISOString() // Add timestamp whenever data is saved
+    };
     localStorage.setItem(`addDescriptionData_${injury}_${dayIndex}`, JSON.stringify(data));
   };
 
